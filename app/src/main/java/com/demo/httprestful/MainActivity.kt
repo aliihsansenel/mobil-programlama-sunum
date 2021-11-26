@@ -13,11 +13,18 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
+import org.json.JSONException
+
+
+
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var searchButton: Button
+    lateinit var addButton: Button
+
     lateinit var username: EditText
+    lateinit var todo: EditText
     lateinit var profilePicture: ImageView
 
     lateinit var realName: TextView
@@ -33,7 +40,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         searchButton = findViewById<Button>(R.id.search_button)
+        addButton = findViewById<Button>(R.id.add_button)
         username = findViewById<EditText>(R.id.username)
+        todo = findViewById<EditText>(R.id.todo)
         profilePicture = findViewById<ImageView>(R.id.profile_picture)
         realName = findViewById<TextView>(R.id.realname)
         location = findViewById<TextView>(R.id.location)
@@ -60,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         val url = "https://api.github.com/users/${username}"
 
         return JsonObjectRequest(
-            Request.Method.GET, url, null,
+            Request.Method.GET, url , null,
             { response ->
                 avatar_url = response.getString("avatar_url")
                 queue.add(placeProfileImage(avatar_url))
@@ -76,6 +85,37 @@ class MainActivity : AppCompatActivity() {
 
     }
     val listener = View.OnClickListener { view ->
-        queue.add(searchGithubUser(username.text.toString()))
+        when(view?.id){
+            R.id.search_button->{
+                queue.add(searchGithubUser(username.text.toString()))
+            }
+            R.id.add_button->{
+                queue.add(addTodo(createTodoObject(todo.text.toString())))
+            }
+        }
+
+    }
+
+    fun createTodoObject(todo: String): JSONObject {
+        val jsonobject = JSONObject()
+        try {
+            jsonobject.put("userId", "10")
+            jsonobject.put("title", todo)
+            jsonobject.put("completed", "false")
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+        return jsonobject
+    }
+    fun addTodo(todo: JSONObject): JsonObjectRequest {
+        val url = "https://jsonplaceholder.typicode.com/todos"
+        return JsonObjectRequest(
+            Request.Method.POST, url , todo,
+            { response ->
+                Toast.makeText(this@MainActivity, response.toString(), Toast.LENGTH_SHORT).show()
+            },
+            {
+                Toast.makeText(this@MainActivity, "Failed to post data..", Toast.LENGTH_SHORT).show()
+            })
     }
 }
